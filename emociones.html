@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Captura de Foto y Predicción de Emociones</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background-color: #121212;
+            color: white;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid white;
+            padding: 20px;
+            background-color: #1e1e1e;
+            border-radius: 10px;
+        }
+        #camera, #photo {
+            width: 100%;
+            max-width: 320px;
+            margin-bottom: 20px;
+            border: 2px solid white;
+            background-color: black;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #3b3b3b;
+            border: 1px solid white;
+            color: white;
+            border-radius: 5px;
+            margin-top: 10px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #575757;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Captura de Foto y Predicción de Emociones</h1>
+        <video id="camera" autoplay></video>
+        <button id="takePhoto">Tomar Foto</button>
+        <canvas id="photo"></canvas>
+        <button id="predictEmotion">Predecir Emoción</button>
+        <p id="emotionResult"></p>
+    </div>
+
+    <script>
+        const camera = document.getElementById('camera');
+        const photoCanvas = document.getElementById('photo');
+        const takePhotoButton = document.getElementById('takePhoto');
+        const predictEmotionButton = document.getElementById('predictEmotion');
+        const emotionResult = document.getElementById('emotionResult');
+        const photoContext = photoCanvas.getContext('2d');
+
+        // Solicita acceso a la cámara
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                camera.srcObject = stream;
+            })
+            .catch(error => {
+                console.error("Error al acceder a la cámara: ", error);
+            });
+
+        // Función para tomar la foto
+        takePhotoButton.addEventListener('click', () => {
+            // Define el tamaño del canvas para coincidir con el video
+            photoCanvas.width = camera.videoWidth;
+            photoCanvas.height = camera.videoHeight;
+
+            // Dibuja la imagen del video en el canvas
+            photoContext.drawImage(camera, 0, 0, photoCanvas.width, photoCanvas.height);
+        });
+
+        // Función para predecir la emoción
+        predictEmotionButton.addEventListener('click', () => {
+            // Convertir la imagen del canvas a base64
+            const dataURL = photoCanvas.toDataURL('image/png');
+
+            // Hacer la solicitud POST a la API de Colab
+            fetch('https://colab.research.google.com/drive/1dBtwQKWfq3j0IvJSlaw7fTBJw6ttU9a9#scrollTo=KhWfGLe4kitr', {  // Reemplaza con la URL pública de tu Colab
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ image: dataURL })
+            })
+            .then(response => response.json())
+            .then(data => {
+                // Mostrar la emoción detectada en la página
+                emotionResult.textContent = `Emoción detectada: ${data.emotion}`;
+            })
+            .catch(error => {
+                console.error('Error al predecir la emoción:', error);
+            });
+        });
+    </script>
+
+</body>
+</html>
